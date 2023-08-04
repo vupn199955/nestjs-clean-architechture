@@ -1,0 +1,51 @@
+version: "3.5"
+
+services:
+  postgres:
+    container_name: project-name_db
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_DB: ${PG_DATABASE}
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - 5434:5432
+    networks:
+      - project-name-network
+    volumes:
+      - project-name-pgdata:/var/lib/postgresql/data
+
+  redis:
+    container_name: project-name_redis
+    image: redis:alpine
+    ports:
+      - 6382:6379
+    networks:
+      - project-name-network
+    volumes:
+      - redis_data:/data
+
+  nest_api:
+    container_name: project-name_nest_api
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - project-name_node_modules:/usr/src/app/node_modules
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    command: npm run start:dev
+    env_file: .env
+    networks:
+      - project-name-network
+    depends_on:
+      - postgres
+      - redis
+networks:
+  project-name-network:
+volumes:
+  project-name-pgdata:
+  redis_data:
+  project-name_node_modules:
